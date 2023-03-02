@@ -43,6 +43,28 @@ extension OpenAISwift {
             }
         }
     }
+
+    /// Send a Chat Completion to the OpenAI API
+    public func sendChatCompletion(message: String, userid: String, model: OpenAIModelType = .gpt3(.chatgpt), completionHandler: @escaping (Result<OpenAIChatGPT, OpenAIError>) -> Void) {
+        let endpoint = Endpoint.chatcompletions
+        let message = ChatMessage(content: message)
+        let body = ChatCommand(model: model.modelName, user: userid, messages: [message])
+        let request = prepareRequest(endpoint, body: body)
+        
+        makeRequest(request: request) { result in
+            switch result {
+            case .success(let success):
+                do {
+                    let res = try JSONDecoder().decode(OpenAIChatGPT.self, from: success)
+                    completionHandler(.success(res))
+                } catch {
+                    completionHandler(.failure(.decodingError(error: error)))
+                }
+            case .failure(let failure):
+                completionHandler(.failure(.genericError(error: failure)))
+            }
+        }
+    }
     
     /// Send a Edit request to the OpenAI API
     /// - Parameters:
@@ -77,7 +99,7 @@ extension OpenAISwift {
     ///   - n: The number of images to generate. Defaults to 1
     ///   - size: The size of the image to generate. Defaults to 256
     ///   - completionHandler: Returns an OpenAI Data Model
-    public func sendImage(with prompt: String, n: Int = 1, size: String = "1024x1024", userid: String, completionHandler: @escaping (Result<OpenAI, OpenAIError>) -> Void) {
+    public func sendImage(with prompt: String, n: Int = 1, size: String = "1024x1024", userid: String, completionHandler: @escaping (Result<OpenAIImage, OpenAIError>) -> Void) {
         let endpoint = Endpoint.image_generations
         let body = Image(prompt: prompt, n: n, size: size, user: userid)
         let request = prepareRequest(endpoint, body: body)
@@ -86,7 +108,7 @@ extension OpenAISwift {
             switch result {
             case .success(let success):
                 do {
-                    let res = try JSONDecoder().decode(OpenAI.self, from: success)
+                    let res = try JSONDecoder().decode(OpenAIImage.self, from: success)
                     completionHandler(.success(res))
                 } catch {
                     completionHandler(.failure(.decodingError(error: error)))
@@ -164,15 +186,5 @@ extension OpenAISwift {
             }
         }
     }
-    
-    /// Send a image generation request to the OpenAI API
-    // @available(swift 5.5)
-    // @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
-    // public func sendImage(with prompt: String, n: Int = 1, size: String = "1024x1024", userid: String, completionHandler: @escaping (Result<OpenAI, OpenAIError>) -> Void) async throws -> OpenAI {
-    //     return try await withCheckedThrowingContinuation { continuation in
-    //         sendImage(with: prompt, n: n, size: size, userid: userid) { result in
-    //             continuation.resume(with: result)
-    //         }
-    //     }
-    // }
+
 }

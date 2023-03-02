@@ -19,3 +19,21 @@ struct Command: Encodable {
         case user
     }
 }
+
+struct ChatCommand: Encodable {
+    let model: String
+    let user: String
+    let messages: [ChatMessage]
+    
+    enum CodingKeys: String, CodingKey {
+        case model
+        case user
+        case messages
+    }
+}
+
+public struct ChatMessage: Codable {
+    public var role: String = "user"
+    public let content: String
+}
+
